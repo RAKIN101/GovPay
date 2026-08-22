@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="GovPay.Api/GovPay.Api.csproj" />
+  <Project Path="GovPay.Application/GovPay.Application.csproj" />
+  <Project Path="GovPay.Cryptography/GovPay.Cryptography.csproj" />
+  <Project Path="GovPay.Domain/GovPay.Domain.csproj" />
+  <Project Path="GovPay.Infrastructure/GovPay.Infrastructure.csproj" />
+</Solution>

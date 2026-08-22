@@ -1,0 +1,6 @@
+@GovPay.Api_HostAddress = http://localhost:5145
+
+GET {{GovPay.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
