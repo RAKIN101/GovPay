@@ -14,6 +14,8 @@ public class GovPayDbContext : DbContext
 
     public DbSet<Bill> Bills { get; set; }
 
+    public DbSet<Payment> Payments { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -23,5 +25,17 @@ public class GovPayDbContext : DbContext
             .WithMany(u => u.Bills)
             .HasForeignKey(b => b.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Payment>()
+            .HasOne(p => p.Bill)
+            .WithMany()
+            .HasForeignKey(p => p.BillId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Payment>()
+            .HasOne(p => p.User)
+            .WithMany()
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

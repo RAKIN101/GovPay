@@ -36,6 +36,8 @@ public partial class Program
         builder.Services.AddScoped<IBillRepository, BillRepository>();
         builder.Services.AddScoped<BillService>();
         builder.Services.AddScoped<BillStatusService>();
+        builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+        builder.Services.AddScoped<IPaymentService, PaymentService>();
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
