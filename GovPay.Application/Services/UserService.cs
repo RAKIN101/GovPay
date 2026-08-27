@@ -10,15 +10,18 @@ public class UserService : IUserService
     private readonly IUserRepository _userRepository;
     private readonly PasswordHasher _passwordHasher;
     private readonly TwoFactorService _twoFactorService;
+    private readonly IJwtService _jwtService;
 
     public UserService(
         IUserRepository userRepository,
         PasswordHasher passwordHasher,
-        TwoFactorService twoFactorService)
+        TwoFactorService twoFactorService,
+        IJwtService jwtService)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _twoFactorService = twoFactorService;
+        _jwtService = jwtService;
     }
 
     public async Task<User?> GetUserByIdAsync(int id)
@@ -43,7 +46,7 @@ public class UserService : IUserService
         return await _userRepository.CreateAsync(user);
     }
 
-    public async Task<User?> LoginAsync(LoginRequest request)
+    public async Task<LoginResponse?> LoginAsync(LoginRequest request)
     {
         var user = await _userRepository.GetByUsernameAsync(request.Username);
 
@@ -64,64 +67,90 @@ public class UserService : IUserService
 
         if (user.TwoFactorEnabled)
         {
-            var result = _twoFactorService.GenerateCode();
+            var otpResult = _twoFactorService.GenerateCode();
 
-            user.TwoFactorCodeHash = result.Hash;
-            user.TwoFactorCodeExpiresAt = result.ExpiresAt;
+            user.TwoFactorCodeHash = otpResult.Hash;
+            user.TwoFactorCodeSalt = otpResult.Salt;
+            user.TwoFactorCodeExpiresAt = otpResult.ExpiresAt;
 
             await _userRepository.UpdateAsync(user);
 
             Console.WriteLine(
-                $"[DEV] 2FA OTP for {user.Username}: {result.Code}");
+                $"[DEV] 2FA OTP for {user.Username}: {otpResult.Code}");
+
+            return new LoginResponse
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                Role = user.Role,
+                RequiresTwoFactor = true,
+                Token = null
+            };
         }
 
-        return user;
+        return new LoginResponse
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role,
+            RequiresTwoFactor = false,
+            Token = _jwtService.GenerateToken(user)
+        };
     }
-    public async Task<User?> VerifyTwoFactorAsync(VerifyTwoFactorRequest request)
-{
-    var user = await _userRepository.GetByUsernameAsync(request.Username);
-
-    if (user is null)
+    public async Task<LoginResponse?> VerifyTwoFactorAsync(VerifyTwoFactorRequest request)
     {
-        return null;
+        var user = await _userRepository.GetByUsernameAsync(request.Username);
+
+        if (user is null)
+        {
+            return null;
+        }
+
+        if (!user.TwoFactorEnabled)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrEmpty(user.TwoFactorCodeHash) ||
+            string.IsNullOrEmpty(user.TwoFactorCodeSalt) ||
+            user.TwoFactorCodeExpiresAt is null)
+        {
+            return null;
+        }
+
+        if (DateTime.UtcNow > user.TwoFactorCodeExpiresAt.Value)
+        {
+            return null;
+        }
+
+        var isCodeValid = _passwordHasher.VerifyPassword(
+            request.Code,
+            user.TwoFactorCodeHash,
+            user.TwoFactorCodeSalt);
+
+        if (!isCodeValid)
+        {
+            return null;
+        }
+
+        user.TwoFactorCodeHash = null;
+        user.TwoFactorCodeSalt = null;
+        user.TwoFactorCodeExpiresAt = null;
+
+        await _userRepository.UpdateAsync(user);
+
+        return new LoginResponse
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role,
+            RequiresTwoFactor = false,
+            Token = _jwtService.GenerateToken(user)
+        };
     }
-
-    if (!user.TwoFactorEnabled)
-    {
-        return null;
-    }
-
-    if (string.IsNullOrEmpty(user.TwoFactorCodeHash) ||
-        string.IsNullOrEmpty(user.TwoFactorCodeSalt) ||
-        user.TwoFactorCodeExpiresAt is null)
-    {
-        return null;
-    }
-
-    if (DateTime.UtcNow > user.TwoFactorCodeExpiresAt.Value)
-    {
-        return null;
-    }
-
-    var isCodeValid = _passwordHasher.VerifyPassword(
-        request.Code,
-        user.TwoFactorCodeHash,
-        user.TwoFactorCodeSalt);
-
-    if (!isCodeValid)
-    {
-        return null;
-    }
-
-    // OTP can only be used once
-    user.TwoFactorCodeHash = null;
-    user.TwoFactorCodeSalt = null;
-    user.TwoFactorCodeExpiresAt = null;
-
-    await _userRepository.UpdateAsync(user);
-
-    return user;
-}
 
     public User CreateUser(User user)
     {

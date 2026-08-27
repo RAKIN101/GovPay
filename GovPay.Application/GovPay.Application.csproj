@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
     <ProjectReference Include="..\GovPay.Domain\GovPay.Domain.csproj" />
     <ProjectReference Include="..\GovPay.Cryptography\GovPay.Cryptography.csproj" />
   </ItemGroup>

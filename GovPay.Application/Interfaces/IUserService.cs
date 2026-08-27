@@ -9,8 +9,8 @@ public interface IUserService
 
     Task<User> RegisterAsync(RegisterRequest request);
 
-    Task<User?> LoginAsync(LoginRequest request);
-    Task<User?> VerifyTwoFactorAsync(VerifyTwoFactorRequest request);
+    Task<LoginResponse?> LoginAsync(LoginRequest request);
+    Task<LoginResponse?> VerifyTwoFactorAsync(VerifyTwoFactorRequest request);
 
     User CreateUser(User user);
 

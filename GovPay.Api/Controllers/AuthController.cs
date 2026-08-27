@@ -1,5 +1,5 @@
 using GovPay.Application.DTOs;
-using GovPay.Application.Services;
+using GovPay.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GovPay.Api.Controllers;
@@ -15,9 +15,9 @@ public interface IAuthController
 [Route("api/[controller]")]
 public class AuthController : ControllerBase, IAuthController
 {
-    private readonly UserService _userService;
+    private readonly IUserService _userService;
 
-    public AuthController(UserService userService)
+    public AuthController(IUserService userService)
     {
         _userService = userService;
     }
@@ -38,9 +38,9 @@ public class AuthController : ControllerBase, IAuthController
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
-        var user = await _userService.LoginAsync(request);
+        var result = await _userService.LoginAsync(request);
 
-        if (user is null)
+        if (result is null)
         {
             return Unauthorized(new
             {
@@ -48,21 +48,15 @@ public class AuthController : ControllerBase, IAuthController
             });
         }
 
-        return Ok(new
-        {
-            user.Id,
-            user.Username,
-            user.Email,
-            user.Role
-        });
+        return Ok(result);
     }
 
     [HttpPost("verify-2fa")]
     public async Task<IActionResult> VerifyTwoFactor(VerifyTwoFactorRequest request)
     {
-        var user = await _userService.VerifyTwoFactorAsync(request);
+        var result = await _userService.VerifyTwoFactorAsync(request);
 
-        if (user is null)
+        if (result is null)
         {
             return Unauthorized(new
             {
@@ -70,12 +64,6 @@ public class AuthController : ControllerBase, IAuthController
             });
         }
 
-        return Ok(new
-        {
-            user.Id,
-            user.Username,
-            user.Email,
-            user.Role
-        });
+        return Ok(result);
     }
 }
