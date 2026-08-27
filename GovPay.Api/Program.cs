@@ -33,6 +33,9 @@ public partial class Program
         builder.Services.AddScoped<PasswordHasher>();
         builder.Services.AddScoped<TwoFactorService>();
         builder.Services.AddScoped<IJwtService, JwtService>();
+        builder.Services.AddScoped<IBillRepository, BillRepository>();
+        builder.Services.AddScoped<BillService>();
+        builder.Services.AddScoped<BillStatusService>();
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -62,8 +65,8 @@ public partial class Program
         }
 
         app.UseHttpsRedirection();
-    app.UseAuthentication();
-    app.UseAuthorization();
+        app.UseAuthentication();
+        app.UseAuthorization();
         app.MapControllers();
         var summaries = new[]
         {

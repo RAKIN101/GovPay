@@ -19,4 +19,6 @@ public class User
 
     public DateTime? TwoFactorCodeExpiresAt { get; set; }
     public string? TwoFactorCodeSalt { get; set; }
+
+    public ICollection<Bill> Bills { get; set; } = new List<Bill>();
 }
