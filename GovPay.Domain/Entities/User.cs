@@ -15,4 +15,8 @@ public class User
     public string Role { get; set; } = "Citizen";
 
     public bool TwoFactorEnabled { get; set; } = false;
+    public string? TwoFactorCodeHash { get; set; }
+
+    public DateTime? TwoFactorCodeExpiresAt { get; set; }
+    public string? TwoFactorCodeSalt { get; set; }
 }

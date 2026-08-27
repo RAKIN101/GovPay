@@ -9,4 +9,5 @@ public interface IUserRepository
     Task<User?> GetByIdAsync(int id);
 
     Task<User?> GetByUsernameAsync(string username);
+    Task UpdateAsync(User user);
 }

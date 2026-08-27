@@ -4,9 +4,16 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GovPay.Api.Controllers;
 
+public interface IAuthController
+{
+    Task<IActionResult> Login(LoginRequest request);
+    Task<IActionResult> Register(RegisterRequest request);
+    Task<IActionResult> VerifyTwoFactor(VerifyTwoFactorRequest request);
+}
+
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : ControllerBase, IAuthController
 {
     private readonly UserService _userService;
 
@@ -29,24 +36,46 @@ public class AuthController : ControllerBase
         });
     }
     [HttpPost("login")]
-public async Task<IActionResult> Login(LoginRequest request)
-{
-    var user = await _userService.LoginAsync(request);
-
-    if (user is null)
+    public async Task<IActionResult> Login(LoginRequest request)
     {
-        return Unauthorized(new
+        var user = await _userService.LoginAsync(request);
+
+        if (user is null)
         {
-            message = "Invalid username or password."
+            return Unauthorized(new
+            {
+                message = "Invalid username or password."
+            });
+        }
+
+        return Ok(new
+        {
+            user.Id,
+            user.Username,
+            user.Email,
+            user.Role
         });
     }
 
-    return Ok(new
+    [HttpPost("verify-2fa")]
+    public async Task<IActionResult> VerifyTwoFactor(VerifyTwoFactorRequest request)
     {
-        user.Id,
-        user.Username,
-        user.Email,
-        user.Role
-    });
-}
+        var user = await _userService.VerifyTwoFactorAsync(request);
+
+        if (user is null)
+        {
+            return Unauthorized(new
+            {
+                message = "Invalid or expired OTP."
+            });
+        }
+
+        return Ok(new
+        {
+            user.Id,
+            user.Username,
+            user.Email,
+            user.Role
+        });
+    }
 }

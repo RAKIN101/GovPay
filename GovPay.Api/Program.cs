@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using GovPay.Infrastructure.Data;
 using GovPay.Infrastructure.Repositories;
 using GovPay.Cryptography.Hashing;
-
 public partial class Program
 {
     private static void Main(string[] args)
@@ -21,6 +20,7 @@ public partial class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<PasswordHasher>();
+        builder.Services.AddScoped<TwoFactorService>();
         var app = builder.Build();
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
