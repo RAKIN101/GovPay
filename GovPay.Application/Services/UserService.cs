@@ -29,9 +29,30 @@ public class UserService : IUserService
         return await _userRepository.GetByIdAsync(id);
     }
 
+    public async Task<List<User>> GetAllUsersAsync()
+    {
+        return await _userRepository.GetAllAsync();
+    }
+
+    public async Task<User?> DeleteUserAsync(int id)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+
+        if (user is null)
+        {
+            return null;
+        }
+
+        return await _userRepository.DeleteAsync(id);
+    }
+
     public async Task<User> RegisterAsync(RegisterRequest request)
     {
         var (hash, salt) = _passwordHasher.HashPassword(request.Password);
+
+        var normalizedRole = string.Equals(request.Role, "Admin", StringComparison.OrdinalIgnoreCase)
+            ? "Admin"
+            : "Citizen";
 
         var user = new User
         {
@@ -39,7 +60,7 @@ public class UserService : IUserService
             Email = request.Email,
             PasswordHash = hash,
             PasswordSalt = salt,
-            Role = "Citizen",
+            Role = normalizedRole,
             TwoFactorEnabled = false
         };
 

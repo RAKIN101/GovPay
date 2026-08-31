@@ -10,5 +10,7 @@ public interface IPaymentRepository
 
     Task<List<Payment>> GetByUserIdAsync(int userId);
 
+    Task<List<Payment>> GetAllAsync();
+
     Task<bool> HasPaymentForBillAsync(int billId);
 }

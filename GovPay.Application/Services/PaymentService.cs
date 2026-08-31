@@ -75,6 +75,13 @@ public class PaymentService : IPaymentService
         return payments.Select(ToResponse).ToList();
     }
 
+    public async Task<List<PaymentResponse>> GetAllPaymentsAsync()
+    {
+        var payments = await _paymentRepository.GetAllAsync();
+
+        return payments.Select(ToResponse).ToList();
+    }
+
     public async Task<PaymentResponse?> GetPaymentByIdAsync(int userId, int paymentId)
     {
         var payment = await _paymentRepository.GetByIdAsync(paymentId);
@@ -92,6 +99,7 @@ public class PaymentService : IPaymentService
         return new PaymentResponse
         {
             Id = payment.Id,
+            UserId = payment.UserId,
             BillId = payment.BillId,
             Amount = payment.Amount,
             PaymentMethod = payment.PaymentMethod,

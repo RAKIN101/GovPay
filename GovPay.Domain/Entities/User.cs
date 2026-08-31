@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace GovPay.Domain.Entities;
 
 public class User
@@ -21,4 +23,15 @@ public class User
     public string? TwoFactorCodeSalt { get; set; }
 
     public ICollection<Bill> Bills { get; set; } = new List<Bill>();
+
+    public ICollection<Post> Posts { get; set; } = new List<Post>();
+
+    [NotMapped]
+    public string? FullNameEncrypted { get; set; }
+
+    [NotMapped]
+    public string? PhoneNumberEncrypted { get; set; }
+
+    [NotMapped]
+    public string? BioEncrypted { get; set; }
 }

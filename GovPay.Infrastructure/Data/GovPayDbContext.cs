@@ -16,6 +16,8 @@ public class GovPayDbContext : DbContext
 
     public DbSet<Payment> Payments { get; set; }
 
+    public DbSet<Post> Posts { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -37,5 +39,11 @@ public class GovPayDbContext : DbContext
             .WithMany()
             .HasForeignKey(p => p.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.User)
+            .WithMany(u => u.Posts)
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

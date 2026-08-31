@@ -7,6 +7,10 @@ public interface IUserService
 {
     Task<User?> GetUserByIdAsync(int id);
 
+    Task<List<User>> GetAllUsersAsync();
+
+    Task<User?> DeleteUserAsync(int id);
+
     Task<User> RegisterAsync(RegisterRequest request);
 
     Task<LoginResponse?> LoginAsync(LoginRequest request);

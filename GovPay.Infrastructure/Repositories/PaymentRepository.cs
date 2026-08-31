@@ -39,6 +39,15 @@ public class PaymentRepository : IPaymentRepository
             .ToListAsync();
     }
 
+    public async Task<List<Payment>> GetAllAsync()
+    {
+        return await _context.Payments
+            .Include(p => p.Bill)
+            .Include(p => p.User)
+            .OrderByDescending(p => p.PaidAt)
+            .ToListAsync();
+    }
+
     public async Task<bool> HasPaymentForBillAsync(int billId)
     {
         return await _context.Payments

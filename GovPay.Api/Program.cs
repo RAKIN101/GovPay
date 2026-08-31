@@ -1,6 +1,7 @@
 using GovPay.Application.Services;
 using GovPay.Application.Interfaces;
 using GovPay.Application.Configuration;
+using GovPay.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using GovPay.Infrastructure.Data;
 using GovPay.Infrastructure.Repositories;
@@ -26,6 +27,17 @@ public partial class Program
         // Add services to the container.
         builder.Services.AddOpenApi();
         builder.Services.AddControllers();
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend", policy =>
+            {
+                policy
+                    .WithOrigins("http://localhost:3000", "http://127.0.0.1:3000")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+            });
+        });
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
         builder.Services.AddScoped<UserService>();
         builder.Services.AddScoped<IUserService, UserService>();
@@ -38,6 +50,9 @@ public partial class Program
         builder.Services.AddScoped<BillStatusService>();
         builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
         builder.Services.AddScoped<IPaymentService, PaymentService>();
+        builder.Services.AddScoped<IPostRepository, PostRepository>();
+        builder.Services.AddScoped<PostService>();
+        builder.Services.AddScoped<UserProfileService>();
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -60,6 +75,82 @@ public partial class Program
 
         var app = builder.Build();
 
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<GovPayDbContext>();
+            var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
+
+            var databaseExists = dbContext.Database.CanConnect();
+            if (!databaseExists)
+            {
+                dbContext.Database.EnsureCreated();
+            }
+
+            var adminUser = dbContext.Users
+                .Where(u => u.Username == "Salman2")
+                .OrderByDescending(u => u.Id)
+                .FirstOrDefault();
+
+            if (adminUser is null)
+            {
+                var newAdmin = new User
+                {
+                    Username = "Salman2",
+                    Email = "salman2@govpay.com",
+                    Role = "Admin",
+                    TwoFactorEnabled = false,
+                };
+
+                var (hash, salt) = passwordHasher.HashPassword("Password123!");
+                newAdmin.PasswordHash = hash;
+                newAdmin.PasswordSalt = salt;
+
+                dbContext.Users.Add(newAdmin);
+            }
+            else
+            {
+                var (hash, salt) = passwordHasher.HashPassword("Password123!");
+                adminUser.Email = "salman2@govpay.com";
+                adminUser.Role = "Admin";
+                adminUser.PasswordHash = hash;
+                adminUser.PasswordSalt = salt;
+                adminUser.TwoFactorEnabled = false;
+                adminUser.TwoFactorCodeHash = null;
+                adminUser.TwoFactorCodeSalt = null;
+                adminUser.TwoFactorCodeExpiresAt = null;
+            }
+
+            var duplicateUsers = dbContext.Users
+                .Where(u => u.Username == "Salman2")
+                .OrderBy(u => u.Id)
+                .Skip(1)
+                .ToList();
+
+            if (duplicateUsers.Count > 0)
+            {
+                dbContext.Users.RemoveRange(duplicateUsers);
+            }
+
+            if (!dbContext.Users.Any(u => u.Username == "citizen1"))
+            {
+                var citizen = new User
+                {
+                    Username = "citizen1",
+                    Email = "citizen1@govpay.local",
+                    Role = "Citizen",
+                    TwoFactorEnabled = false,
+                };
+
+                var (citizenHash, citizenSalt) = passwordHasher.HashPassword("Password123!");
+                citizen.PasswordHash = citizenHash;
+                citizen.PasswordSalt = citizenSalt;
+
+                dbContext.Users.Add(citizen);
+            }
+
+            dbContext.SaveChanges();
+        }
+
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
@@ -67,6 +158,7 @@ public partial class Program
         }
 
         app.UseHttpsRedirection();
+        app.UseCors("AllowFrontend");
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();

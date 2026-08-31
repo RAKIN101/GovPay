@@ -11,6 +11,8 @@ public interface IPaymentService
     Task<List<PaymentResponse>> GetPaymentHistoryAsync(
         int userId);
 
+    Task<List<PaymentResponse>> GetAllPaymentsAsync();
+
     Task<PaymentResponse?> GetPaymentByIdAsync(
         int userId,
         int paymentId);

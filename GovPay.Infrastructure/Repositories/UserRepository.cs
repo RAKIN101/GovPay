@@ -33,10 +33,32 @@ public class UserRepository : IUserRepository
         return await _context.Users
             .FirstOrDefaultAsync(u => u.Username == username);
     }
-    
-   public async Task UpdateAsync(User user)
+
+    public async Task<List<User>> GetAllAsync()
     {
-    _context.Users.Update(user);
-    await _context.SaveChangesAsync();
+        return await _context.Users
+            .OrderBy(u => u.Username)
+            .ToListAsync();
+    }
+
+    public async Task<User?> DeleteAsync(int id)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user is null)
+        {
+            return null;
+        }
+
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+
+        return user;
+    }
+
+    public async Task UpdateAsync(User user)
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
     }
 }
